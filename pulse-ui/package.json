@@ -1,0 +1,19 @@
+{
+  "name": "pulse-ui",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "bin":{
+    "pulse-ui": "index.js"
+  },
+  "scripts": {
+    "start": "node index.js"
+    },
+  "dependencies": {
+    "blessed": "0.1.81",
+    "blessed-contrib": "4.10.0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
