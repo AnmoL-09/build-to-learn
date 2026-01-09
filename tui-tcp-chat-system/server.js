@@ -1,26 +1,45 @@
-//importing required modules
 const net = require("net");
 
-// defining server
-const server = net.createServer((socket) =>{
-    console.log("Client connected");
+const server = net.createServer((socket) => {
+  console.log("Client connected");
 
-    socket.on("data", (data) => {
-        console.log("Raw Data Received: ", data.toString());
-    });
+  let buffer = "";
 
-    socket.on("end", () => {
-        console.log("Client disconnected");
-    });
+  socket.on("data", (chunk) => {
+    buffer += chunk.toString();
 
-    socket.on("error", (err) => {
-        console.error("Socket error: ", err.message);
-    });    
+    while (true) {
+      const separatorIndex = buffer.indexOf("::");
+      if (separatorIndex === -1) break;
+
+      const lengthPart = buffer.slice(0, separatorIndex);
+      const messageLength = Number(lengthPart);
+
+      if (Number.isNaN(messageLength)) {
+        console.error("Invalid length");
+        socket.destroy();
+        return;
+      }
+
+      const totalLength = separatorIndex + 2 + messageLength;
+      if (buffer.length < totalLength) break;
+
+      const message = buffer.slice(
+        separatorIndex + 2,
+        totalLength
+      );
+
+      buffer = buffer.slice(totalLength);
+
+      console.log("📩 Message:", message);
+    }
+  });
+
+  socket.on("end", () => {
+    console.log("Client disconnected");
+  });
 });
 
-// server listening 
-const PORT = 4000;
-
-server.listen(PORT, () => {
-    console.log(`Server listening on port ${PORT}`);
+server.listen(4000, () => {
+  console.log("TCP server listening on port 4000");
 });

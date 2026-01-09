@@ -4,13 +4,14 @@ const net = require("net");
 // initializing client
 const client = net.createConnection({ port: 4000 }, () => {
     console.log("Connected to server");
-    client.write("Hello from client!");
-});
 
-client.on("data", (data) => {
-    console.log("From server: ", data.toString());
-});
+    send("hello");
+    send("hello world");
+    send("this is a longer message to test the TCP chat system");
+})
 
-client.on("end", () => {
-    console.log("Disconnected from server");
-});
+// function to send messages to server
+function send(message) {
+    const framed = `${message.length}::${message}`;
+    client.write(framed);
+}
