@@ -2,7 +2,7 @@
 
 import MapLibreGL, { type PopupOptions, type MarkerOptions } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/components/theme-provider";
 import {
   createContext,
   forwardRef,
@@ -93,27 +93,44 @@ const Map = forwardRef<MapRef, MapProps>(function Map(
       resolvedTheme === "dark" ? mapStyles.dark : mapStyles.light;
     currentStyleRef.current = initialStyle;
 
-    const map = new MapLibreGL.Map({
-      container: containerRef.current,
-      style: initialStyle,
-      renderWorldCopies: false,
-      attributionControl: {
-        compact: true,
-      },
-      ...props,
-    });
+    let map: MapLibreGL.Map;
+    try {
+      map = new MapLibreGL.Map({
+        container: containerRef.current,
+        style: initialStyle,
+        renderWorldCopies: false,
+        attributionControl: {
+          compact: true,
+        },
+        ...props,
+      });
 
-    const styleDataHandler = () => setIsStyleLoaded(true);
-    const loadHandler = () => setIsLoaded(true);
+      const styleDataHandler = () => setIsStyleLoaded(true);
+      const loadHandler = () => setIsLoaded(true);
+      const errorHandler = (e: { error?: Error }) => {
+        console.error("Map error:", e.error);
+        setIsLoaded(false);
+        setIsStyleLoaded(false);
+      };
 
-    map.on("load", loadHandler);
-    map.on("styledata", styleDataHandler);
-    setMapInstance(map);
+      map.on("load", loadHandler);
+      map.on("styledata", styleDataHandler);
+      map.on("error", errorHandler);
+      setMapInstance(map);
+    } catch (error) {
+      console.error("Failed to initialize map:", error);
+      setIsLoaded(false);
+      setIsStyleLoaded(false);
+      return;
+    }
 
     return () => {
-      map.off("load", loadHandler);
-      map.off("styledata", styleDataHandler);
-      map.remove();
+      if (map) {
+        map.off("load");
+        map.off("styledata");
+        map.off("error");
+        map.remove();
+      }
       setIsLoaded(false);
       setIsStyleLoaded(false);
       setMapInstance(null);
@@ -618,8 +635,24 @@ function MapControls({
         (error) => {
           console.error("Error getting location:", error);
           setWaitingForLocation(false);
+          // Show user-friendly error message
+          const errorMessage = 
+            error.code === 1
+              ? "Location access denied. Please enable location permissions."
+              : error.code === 2
+              ? "Location unavailable. Please check your device settings."
+              : "Unable to get your location. Please try again.";
+          alert(errorMessage);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0,
         }
       );
+    } else {
+      setWaitingForLocation(false);
+      alert("Geolocation is not supported by your browser.");
     }
   }, [map, onLocate]);
 
