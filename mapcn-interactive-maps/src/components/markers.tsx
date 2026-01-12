@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Map, MapMarker, MarkerContent, MarkerPopup, MarkerTooltip, MarkerLabel } from './ui/map'
 import { Card } from './ui/card'
+import { MapPin } from 'lucide-react'
 
 interface Location {
   name: string
@@ -59,8 +60,8 @@ export default function Markers() {
   const [selectedMarker, setSelectedMarker] = useState<string | null>(null)
 
   return (
-    <div className="space-y-4">
-      <div className='h-[600px] w-full rounded-lg border overflow-hidden'>
+    <div className="space-y-6">
+      <div className='h-[600px] w-full rounded-lg border overflow-hidden shadow-inner bg-muted/20'>
         <Map center={[77.594566, 12.971599]} zoom={11}>
           {locations.map((location, index) => (
             <MapMarker
@@ -99,14 +100,31 @@ export default function Markers() {
           ))}
         </Map>
       </div>
-      <Card>
-        <div className="p-4 space-y-2">
-          <h3 className="font-semibold">Interactive Features</h3>
-          <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-            <li>Hover over markers to see tooltips</li>
-            <li>Click markers to open detailed popups</li>
-            <li>Each marker shows category icons and labels</li>
-            <li>Total locations: {locations.length}</li>
+      <Card className="bg-gradient-to-br from-card to-card/50 border-2">
+        <div className="p-6 space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-md bg-primary/10">
+              <MapPin className="h-4 w-4 text-primary" />
+            </div>
+            <h3 className="font-semibold text-lg">Interactive Features</h3>
+          </div>
+          <ul className="text-sm text-muted-foreground space-y-2">
+            <li className="flex items-start gap-2">
+              <span className="text-primary mt-0.5">•</span>
+              <span>Hover over markers to see tooltips with location details</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-primary mt-0.5">•</span>
+              <span>Click markers to open detailed popups with full information</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-primary mt-0.5">•</span>
+              <span>Each marker shows category icons and labels for easy identification</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-primary mt-0.5">•</span>
+              <span className="font-medium text-foreground">Total locations: {locations.length}</span>
+            </li>
           </ul>
         </div>
       </Card>

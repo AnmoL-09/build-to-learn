@@ -8,7 +8,7 @@ interface BangloreMapProps {
 
 export const BangloreMap = ({ onError, onSuccess }: BangloreMapProps) => {
   return (
-    <Card className="h-[600px] p-0 overflow-hidden">
+    <div className="h-[600px] w-full rounded-lg border overflow-hidden shadow-inner bg-muted/20">
       <Map center={[77.594566, 12.971599]} zoom={9}>
         <MapControls 
           position="top-left"
@@ -20,6 +20,6 @@ export const BangloreMap = ({ onError, onSuccess }: BangloreMapProps) => {
           onSuccess={onSuccess}
         />
       </Map>
-    </Card>
+    </div>
   );
 }
