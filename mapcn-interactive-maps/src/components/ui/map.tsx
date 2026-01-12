@@ -73,6 +73,8 @@ const Map = forwardRef<MapRef, MapProps>(function Map(
   const [mapInstance, setMapInstance] = useState<MapLibreGL.Map | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isStyleLoaded, setIsStyleLoaded] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
   const { resolvedTheme } = useTheme();
   const currentStyleRef = useRef<MapStyleOption | null>(null);
 
@@ -88,6 +90,11 @@ const Map = forwardRef<MapRef, MapProps>(function Map(
 
   useEffect(() => {
     if (!containerRef.current) return;
+    
+    // Clear any existing error when retrying
+    if (retryKey > 0) {
+      setError(null);
+    }
 
     const initialStyle =
       resolvedTheme === "dark" ? mapStyles.dark : mapStyles.light;
@@ -106,9 +113,14 @@ const Map = forwardRef<MapRef, MapProps>(function Map(
       });
 
       const styleDataHandler = () => setIsStyleLoaded(true);
-      const loadHandler = () => setIsLoaded(true);
+      const loadHandler = () => {
+        setIsLoaded(true);
+        setError(null); // Clear any previous errors on successful load
+      };
       const errorHandler = (e: { error?: Error }) => {
-        console.error("Map error:", e.error);
+        const mapError = e.error || new Error("Map failed to load");
+        console.error("Map error:", mapError);
+        setError(mapError);
         setIsLoaded(false);
         setIsStyleLoaded(false);
       };
@@ -118,7 +130,9 @@ const Map = forwardRef<MapRef, MapProps>(function Map(
       map.on("error", errorHandler);
       setMapInstance(map);
     } catch (error) {
-      console.error("Failed to initialize map:", error);
+      const initError = error instanceof Error ? error : new Error("Failed to initialize map");
+      console.error("Failed to initialize map:", initError);
+      setError(initError);
       setIsLoaded(false);
       setIsStyleLoaded(false);
       return;
@@ -133,10 +147,11 @@ const Map = forwardRef<MapRef, MapProps>(function Map(
       }
       setIsLoaded(false);
       setIsStyleLoaded(false);
+      setError(null);
       setMapInstance(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [retryKey]);
 
   useEffect(() => {
     if (!mapInstance || !resolvedTheme) return;
@@ -166,12 +181,42 @@ const Map = forwardRef<MapRef, MapProps>(function Map(
     [mapInstance, isLoaded, isStyleLoaded]
   );
 
+  const handleRetry = useCallback(() => {
+    if (mapInstance) {
+      mapInstance.remove();
+      setMapInstance(null);
+    }
+    setError(null);
+    setIsLoaded(false);
+    setIsStyleLoaded(false);
+    // Force re-initialization by incrementing retry key
+    setRetryKey((prev) => prev + 1);
+  }, [mapInstance]);
+
   return (
     <MapContext.Provider value={contextValue}>
       <div ref={containerRef} className="relative w-full h-full">
-        {isLoading && <DefaultLoader />}
-        {/* SSR-safe: children render only when map is loaded on client */}
-        {mapInstance && children}
+        {error && !mapInstance ? (
+          <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-10">
+            <div className="text-center space-y-3 p-4">
+              <p className="text-sm font-medium text-destructive">
+                {error.message || "Failed to load map"}
+              </p>
+              <button
+                onClick={handleRetry}
+                className="text-xs px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {isLoading && <DefaultLoader />}
+            {/* SSR-safe: children render only when map is loaded on client */}
+            {mapInstance && children}
+          </>
+        )}
       </div>
     </MapContext.Provider>
   );
@@ -599,6 +644,8 @@ function MapControls({
   showFullscreen = false,
   className,
   onLocate,
+  onError,
+  onSuccess,
 }: MapControlsProps) {
   const { map, isLoaded } = useMap();
   const [waitingForLocation, setWaitingForLocation] = useState(false);
@@ -630,6 +677,7 @@ function MapControls({
             duration: 1500,
           });
           onLocate?.(coords);
+          onSuccess?.("Location found successfully");
           setWaitingForLocation(false);
         },
         (error) => {
@@ -642,7 +690,7 @@ function MapControls({
               : error.code === 2
               ? "Location unavailable. Please check your device settings."
               : "Unable to get your location. Please try again.";
-          alert(errorMessage);
+          onError?.(errorMessage);
         },
         {
           enableHighAccuracy: true,
@@ -652,19 +700,26 @@ function MapControls({
       );
     } else {
       setWaitingForLocation(false);
-      alert("Geolocation is not supported by your browser.");
+      onError?.("Geolocation is not supported by your browser.");
     }
-  }, [map, onLocate]);
+  }, [map, onLocate, onError, onSuccess]);
 
   const handleFullscreen = useCallback(() => {
     const container = map?.getContainer();
     if (!container) return;
+    
     if (document.fullscreenElement) {
-      document.exitFullscreen();
+      document.exitFullscreen().catch((error) => {
+        console.error("Error exiting fullscreen:", error);
+        onError?.("Failed to exit fullscreen mode.");
+      });
     } else {
-      container.requestFullscreen();
+      container.requestFullscreen().catch((error) => {
+        console.error("Error entering fullscreen:", error);
+        onError?.("Failed to enter fullscreen mode. Your browser may not support this feature.");
+      });
     }
-  }, [map]);
+  }, [map, onError]);
 
   if (!isLoaded) return null;
 

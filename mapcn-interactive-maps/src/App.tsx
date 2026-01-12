@@ -3,8 +3,12 @@ import './App.css'
 import Markers from './components/markers'
 import { ThemeToggle } from './components/theme-toggle'
 import { ErrorBoundary } from './components/error-boundary'
+import { useToast } from './hooks/use-toast'
+import { ToastContainer } from './components/toast'
 
 function App() {
+  const { toasts, removeToast, showError, showSuccess } = useToast()
+
   return (
     <ErrorBoundary>
       <div className="min-h-screen w-full flex flex-col bg-background">
@@ -22,7 +26,7 @@ function App() {
               <h2 className="text-xl font-semibold mb-4 text-foreground">
                 Bangalore Map with Controls
               </h2>
-              <BangloreMap />
+              <BangloreMap onError={showError} onSuccess={showSuccess} />
             </section>
           </ErrorBoundary>
           <ErrorBoundary>
@@ -34,6 +38,7 @@ function App() {
             </section>
           </ErrorBoundary>
         </main>
+        <ToastContainer toasts={toasts} onRemove={removeToast} />
       </div>
     </ErrorBoundary>
   )

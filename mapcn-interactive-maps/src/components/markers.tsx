@@ -80,7 +80,7 @@ export default function Markers() {
                 <div className="text-xs text-muted-foreground">{location.category}</div>
               </MarkerTooltip>
               {selectedMarker === location.name && (
-                <MarkerPopup closeButton onClose={() => setSelectedMarker(null)}>
+                <MarkerPopup closeButton>
                   <div className="space-y-2 min-w-[200px]">
                     <h3 className="font-semibold text-lg">{location.name}</h3>
                     <p className="text-sm text-muted-foreground">{location.description}</p>
