@@ -1,3 +1,4 @@
+import readline from "node:realine/promises";
 import * as z from "zod";
 import { createAgent, humanInTheLoopMiddleware, tool } from "langchain";
 import { ChatGroq } from "@langchain/groq"
@@ -145,18 +146,24 @@ const agent = createAgent({
   checkpointer: new MemorySaver(),
 });
 
-const config = { configurable: { thread_id: '1' } };
+async function main(){
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+
+  const interrupts=[];
+
+  while(true){
+    const query = await rl.question("You:")
+    const config = { configurable: { thread_id: '1' } };
 
 const response = await agent.invoke(
     {
       messages: [
         { 
           role: "user", 
-          content:`
-                  Check inbox emails.
-                  Identify refund requests.
-                  Process refunds for those emails.
-                  `
+          content: query
  
         },
       ],
@@ -164,4 +171,25 @@ const response = await agent.invoke(
   config
 );
 
-console.log(JSON.stringify(response.__interrupt__));
+
+let output = "";
+if(response.__interrupt__.length){
+  interrupts.push(response.__interrupt__[0]);
+
+  output += response.__interrupt__[0].value.actionRequests[0].description + "\n\n";
+  output += "Choose:\n";
+
+  output += response.__interrupt__[0].value.reviewConfigs[0].allowedDecisions
+  .filter(decision => decision !== "edit")
+  .map((decision, idx) => `${idx + 1}. ${decision}`)
+  .join("\n");
+}
+console.log(output);
+  }
+
+}
+
+main();
+
+
+
