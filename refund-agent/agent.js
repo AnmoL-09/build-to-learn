@@ -157,6 +157,8 @@ async function main(){
   while(true){
     const query = await rl.question("You:")
     const config = { configurable: { thread_id: '1' } };
+    if(query === 'bye' || query === 'exit') break;
+    
 
 const response = await agent.invoke(
   interrupts.length 
@@ -180,7 +182,7 @@ const response = await agent.invoke(
 interrupts = [];
 
 let output = "";
-if(response.__interrupt__.length){
+if(response?.__interrupt__?.length){
   interrupts.push(response.__interrupt__[0]);
 
   output += response.__interrupt__[0].value.actionRequests[0].description + "\n\n";
@@ -190,10 +192,12 @@ if(response.__interrupt__.length){
   .filter(decision => decision !== "edit")
   .map((decision, idx) => `${idx + 1}. ${decision}`)
   .join("\n");
+}else{
+  output += response.messages[response.messages.length -1].content;
 }
 console.log(output);
   }
-
+  rl.close();
 }
 
 main();
