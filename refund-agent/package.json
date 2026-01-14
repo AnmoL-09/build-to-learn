@@ -5,13 +5,16 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "node --env-file=.env agent.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.10.0",
   "dependencies": {
+    "@langchain/core": "^1.1.13",
+    "@langchain/groq": "^1.0.3",
+    "langchain": "^1.2.8",
     "zod": "^4.3.5"
   }
 }
