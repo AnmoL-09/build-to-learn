@@ -1,8 +1,8 @@
-import readline from "node:realine/promises";
+import * as readline from 'node:readline/promises';
 import * as z from "zod";
 import { createAgent, humanInTheLoopMiddleware, tool } from "langchain";
 import { ChatGroq } from "@langchain/groq"
-import  { MemorySaver} from "@langchain/langgraph"
+import  { Command, MemorySaver} from "@langchain/langgraph"
 
 
 const gmailEmails = {
@@ -152,14 +152,20 @@ async function main(){
     output: process.stdout
   });
 
-  const interrupts=[];
+  let interrupts=[];
 
   while(true){
     const query = await rl.question("You:")
     const config = { configurable: { thread_id: '1' } };
 
 const response = await agent.invoke(
-    {
+  interrupts.length 
+    ? new Command({ resume: {
+      [interrupts?.[0]?.id]: {
+        decisions: [{ type: query === '1' ? "approve" : "reject" }],
+      }
+    } })
+    : {
       messages: [
         { 
           role: "user", 
@@ -171,6 +177,7 @@ const response = await agent.invoke(
   config
 );
 
+interrupts = [];
 
 let output = "";
 if(response.__interrupt__.length){
