@@ -1,6 +1,7 @@
 import * as z from "zod";
 import { createAgent, humanInTheLoopMiddleware, tool } from "langchain";
 import { ChatGroq } from "@langchain/groq"
+import  { MemorySaver} from "@langchain/langgraph"
 
 const gmailEmails = {
   messages: [
@@ -118,7 +119,7 @@ const getEmails = tool(
 },{
     name: "get_emails",
     description: "Get the emails from inbox",
-    schema: z.object({
+    schema: z.object({ 
       emails: z.array(z.string()).describe("List of email IDs which need to be refunded")
     })
   },
@@ -143,10 +144,18 @@ const agent = createAgent({
       descriptionPrefix: 'Refund pending approval',
     }),
   ],
+  checkpointer: new MemorySaver(),
 });
 
 console.log(
-  await agent.invoke({
-    messages: [{ role: "user", content: "Hey is there any refund requests, I wanted to refund them asap." }],
-  })
+  await agent.invoke(
+    {
+      messages: [
+        { 
+          role: "user", content: "Hey is there any refund requests, I wanted to refund them asap." 
+        },
+      ],
+  },
+  {configurable: {thread_id: '1'}}
+)
 );
