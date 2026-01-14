@@ -3,6 +3,7 @@ import { createAgent, humanInTheLoopMiddleware, tool } from "langchain";
 import { ChatGroq } from "@langchain/groq"
 import  { MemorySaver} from "@langchain/langgraph"
 
+
 const gmailEmails = {
   messages: [
     {
@@ -113,15 +114,12 @@ const llm = new ChatGroq({
 })
 
 const getEmails = tool(
-  ({emails}) => {
+  () => {
     // todo: access Gmail APIs
-  return JSON.stringify(gmailEmails);
+  return gmailEmails;
 },{
     name: "get_emails",
     description: "Get the emails from inbox",
-    schema: z.object({ 
-      emails: z.array(z.string()).describe("List of email IDs which need to be refunded")
-    })
   },
 );
 
@@ -147,15 +145,23 @@ const agent = createAgent({
   checkpointer: new MemorySaver(),
 });
 
-console.log(
-  await agent.invoke(
+const config = { configurable: { thread_id: '1' } };
+
+const response = await agent.invoke(
     {
       messages: [
         { 
-          role: "user", content: "Hey is there any refund requests, I wanted to refund them asap." 
+          role: "user", 
+          content:`
+                  Check inbox emails.
+                  Identify refund requests.
+                  Process refunds for those emails.
+                  `
+ 
         },
       ],
   },
-  {configurable: {thread_id: '1'}}
-)
+  config
 );
+
+console.log(JSON.stringify(response.__interrupt__));
