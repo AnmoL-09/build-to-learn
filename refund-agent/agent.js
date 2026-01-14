@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { createAgent, tool } from "langchain";
+import { createAgent, humanInTheLoopMiddleware, tool } from "langchain";
 import { ChatGroq } from "@langchain/groq"
 
 const gmailEmails = {
@@ -137,6 +137,12 @@ const refund = tool(
 const agent = createAgent({
   model: llm,
   tools: [getEmails, refund],
+  middleware: [
+    humanInTheLoopMiddleware({
+      interruptOn: { refund: true },
+      descriptionPrefix: 'Refund pending approval',
+    }),
+  ],
 });
 
 console.log(
