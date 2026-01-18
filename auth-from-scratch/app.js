@@ -1,13 +1,10 @@
 const express = require("express");
+const cookieParser = require("cookie-parser");
+
 const app = express();
-const PORT = 5000;
+app.use(express.json());
+app.use(cookieParser());
 
-// Defining a basic GET route
-app.get("/", (req, res) => {
-  res.send("Hello, World!");
-});
-
-// Starting the server
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+app.listen(3000, () => {
+  console.log("Server running on port 3000");
 });
