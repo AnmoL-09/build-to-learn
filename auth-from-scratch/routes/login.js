@@ -1,13 +1,13 @@
 const express = require("express");
 const crypto = require("crypto");
-const User = require("../models/user");
-const session = require("../models/session");
-const { verifyPassword } = require("../utils/passwordUtils");
+const User = require("../model/User");
+const Session = require("../model/Session");
+const { verifyPassword } = require("../utils/password");
 
 const router = express.Router();
 
 router.post("/login", async (req, res) => {
-  const { email, username } = req.body;
+  const { email, password } = req.body;
 
   const user = await User.findOne({ email });
   if (!user)
