@@ -13,6 +13,14 @@ const TODOS: Todo[] = [
 
 export const todoRouter = router({
   getAllTodos: publicProcedure
+    .meta({
+      openapi: {
+        method: "GET",
+        path: "/todos",
+        tags: ["TODO"],
+        description: "Returns all the todos",
+      },
+    })
     .input(z.undefined())
     .output(getAllTodosOutputModel)
     .query(() => {

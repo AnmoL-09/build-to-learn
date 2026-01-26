@@ -2,13 +2,24 @@ import express from "express";
 import * as trpcExpress from "@trpc/server/adapters/express";
 import { createContext } from "node:vm";
 import { appRouter } from "./server/index.js";
+import { generateOpenApiDocument } from "trpc-to-openapi";
 
 const app = express();
 
 app.use(express.json());
 
+const openapiDocument = generateOpenApiDocument(appRouter, {
+  baseUrl: "https://localhost:8000",
+  title: "My TODO Server",
+  version: "1.0.0",
+});
+
 app.get("/", (req, res) => {
   return res.json({ status: "Server is up and running" });
+});
+
+app.get("/openapi.json", (req, res) => {
+  return res.json(openapiDocument);
 });
 
 app.use(

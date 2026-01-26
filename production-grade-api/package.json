@@ -15,6 +15,7 @@
     "@trpc/server": "^11.8.1",
     "@types/express": "^5.0.6",
     "express": "^5.2.1",
+    "trpc-to-openapi": "^3.1.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
